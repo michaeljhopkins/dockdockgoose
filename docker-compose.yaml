@@ -1,0 +1,58 @@
+version: '2'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./Projects:/var/www/Projects
+      - ./.dockerFiles/nginx/sites-enabled/auth.olc.conf:/etc/nginx/sites-enabled/auth.olc.conf
+      - ./.dockerFiles/nginx/sites-enabled/scorecard.olc.conf:/etc/nginx/sites-enabled/scorecard.olc.conf
+      - ./.dockerFiles/nginx/sites-enabled/drupal.olc.conf:/etc/nginx/sites-enabled/drupal.olc.conf
+      - ./.dockerFiles/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./.dockerFiles/nginx/fastcgi_params:/etc/nginx/fastcgi_params
+    networks:
+      - appnet
+  php70:
+    build:
+      context: ./.dockerFiles/php7fpm
+      dockerfile: Dockerfile
+    volumes:
+      - ./Projects:/var/www/Projects
+    networks:
+      - appnet
+  php53:
+    image: dockerizedrupal/php-5.3
+    volumes:
+      - ./Projects:/var/www/Projects
+    networks:
+      - appnet
+  php56:
+    image: php:5.6-fpm
+    volumes:
+      - ./Projects:/var/www/Projects
+    networks:
+      - appnet
+  redis:
+    image: redis:alpine
+    networks:
+     - appnet
+  mysqldb:
+    image: mysql:5.7
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: olc_database
+      MYSQL_USER: olc_user
+      MYSQL_PASSWORD: olc_password
+    volumes:
+     - data:/var/lib/mysql
+    networks:
+     - appnet
+networks:
+  appnet:
+    driver: "bridge"
+volumes:
+  data:
+    driver: "local"
